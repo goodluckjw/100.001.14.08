@@ -103,17 +103,12 @@ def extract_chunk_and_josa(token, searchword):
     original_token = token
     suffix = None
     
-    # 디버깅 출력
-    print(f"토큰 분석: '{token}', 검색어: '{searchword}'")
-    
     # 검색어 자체가 토큰인 경우 바로 반환
     if token == searchword:
-        print(f"정확히 일치: '{token}' == '{searchword}'")
         return token, None, None
     
     # 토큰에 검색어가 포함되어 있지 않으면 바로 반환
     if searchword not in token:
-        print(f"검색어 미포함: '{searchword}' not in '{token}'")
         return token, None, None
     
     # 1. 토큰이 검색어로 시작하는 경우, 접미사 처리
@@ -122,7 +117,6 @@ def extract_chunk_and_josa(token, searchword):
         # 접미사가 제외 목록에 있는지 확인
         for s in sorted(suffix_exclude, key=len, reverse=True):
             if suffix_part == s:
-                print(f"접미사 발견: '{searchword}' + '{s}' == '{token}'")
                 return searchword, None, s
     
     # 2. 검색어가 토큰 내에 포함된 경우
@@ -134,31 +128,27 @@ def extract_chunk_and_josa(token, searchword):
         if end_pos < len(token):
             suffix_part = token[end_pos:]
             for s in sorted(suffix_exclude, key=len, reverse=True):
-                if suffix_part.startswith(s):
+                if suffix_part == s:
                     # 검색어 + 접미사가 정확히 토큰과 일치하는 경우
-                    if start_pos == 0 and end_pos + len(s) == len(token):
-                        print(f"검색어+접미사 패턴: '{searchword}' + '{s}' == '{token}'")
+                    if start_pos == 0:
                         return searchword, None, s
     
     # 3. 조사 확인
     for j in sorted(josa_list, key=len, reverse=True):
         # 검색어 + 조사가 정확히 토큰과 일치하는 경우
         if token == searchword + j:
-            print(f"검색어+조사 패턴: '{searchword}' + '{j}' == '{token}'")
             return searchword, j, suffix
         
         # 토큰 내에 검색어가 있고, 그 뒤에 바로 조사가 따라오는 경우
         start_pos = token.find(searchword)
         if start_pos != -1:
             end_pos = start_pos + len(searchword)
-            if end_pos < len(token) and token[end_pos:].startswith(j):
+            if end_pos < len(token) and token[end_pos:] == j:
                 # 검색어 + 조사가 정확히 토큰과 일치하는 경우
-                if start_pos == 0 and end_pos + len(j) == len(token):
-                    print(f"검색어+조사 패턴: '{searchword}' + '{j}' == '{token}'")
+                if start_pos == 0:
                     return searchword, j, suffix
     
     # 4. 토큰이 검색어를 포함하지만 조건에 맞지 않는 경우 토큰 전체 반환
-    print(f"기타 패턴 (토큰 전체 반환): '{token}'")
     return token, None, suffix
 
 def apply_josa_rule(orig, replaced, josa):
@@ -608,15 +598,16 @@ def run_amendment_logic(find_word, replace_word):
             loc_str = group_locations(sorted(set(locations)))
             result_lines.append(f"{loc_str} 중 {rule}")
             
-        # 변경된 법률에 대한 개정문 생성 (줄바꿈 개선)
-        if result_lines:
-            prefix = chr(9312 + idx) if idx < 20 else f'({idx + 1})'
-            amendment = f"{prefix} {law_name} 일부를 다음과 같이 개정한다.\n"
-            # 각 개정 규칙마다 줄바꿈 추가
-            amendment += "\n".join(result_lines)
-            amendment_results.append(amendment)
-        else:
-            skipped_laws.append(f"{law_name}: 결과줄이 생성되지 않음")
+# run_amendment_logic 함수 내의 결과 생성 부분 (전체 함수 중 일부만 수정)
+# 변경된 법률에 대한 개정문 생성 (줄바꿈 개선)
+if result_lines:
+    prefix = chr(9312 + idx) if idx < 20 else f'({idx + 1})'
+    amendment = f"{prefix} {law_name} 일부를 다음과 같이 개정한다.\n"
+    # 각 개정 규칙마다 줄바꿈 추가
+    amendment += "\n".join(result_lines)
+    amendment_results.append(amendment)
+else:
+    skipped_laws.append(f"{law_name}: 결과줄이 생성되지 않음")
 
     # 디버깅 정보 출력
     if skipped_laws:
