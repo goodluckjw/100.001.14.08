@@ -626,8 +626,9 @@ if result_lines:
 else:
     skipped_laws.append(f"{law_name}: 결과줄이 생성되지 않음")
 
-    # 디버깅 정보 출력
-    if skipped_laws:
-        print("누락된 법률 목록:", skipped_laws)
+# 디버깅 정보 출력
+if skipped_laws:
+   print("누락된 법률 목록:", skipped_laws)
         
-    return amendment_results if amendment_results else ["⚠️ 개정 대상 조문이 없습니다."]
+# 함수의 리턴문 (함수 마지막에 위치, 들여쓰기 없음)
+return amendment_results if amendment_results else ["⚠️ 개정 대상 조문이 없습니다."]
