@@ -167,7 +167,7 @@ def extract_chunk_and_josa(token, searchword):
     
     # 4. 토큰이 검색어를 포함하지만 조건에 맞지 않는 경우 토큰 전체 반환
     return token, None, suffix
-
+    
 def apply_josa_rule(orig, replaced, josa):
     """개정문 조사 규칙에 따라 적절한 형식 반환"""
     # 동일한 단어면 변경할 필요 없음
