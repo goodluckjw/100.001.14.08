@@ -539,7 +539,7 @@ def run_amendment_logic(find_word, replace_word):
 
                     # 목 내용 검색
                     for 목 in 호.findall("목"):
-                       목번호 = 목.findtext("목번호")
+                        목번호 = 목.findtext("목번호")
                         for m in 목.findall("목내용"):
                             if not m.text:
                                 continue
