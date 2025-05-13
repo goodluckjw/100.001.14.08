@@ -111,41 +111,58 @@ def extract_chunk_and_josa(token, searchword):
     if searchword not in token:
         return token, None, None
     
-    # 1. 토큰이 검색어로 시작하는 경우, 접미사 처리
-    if token.startswith(searchword):
-        suffix_part = token[len(searchword):]
-        # 접미사가 제외 목록에 있는지 확인
-        for s in sorted(suffix_exclude, key=len, reverse=True):
-            if suffix_part == s:
+    # 1. 접미사 제거 시도 (단, 이 접미사들은 덩어리에 포함시키지 않음)
+    for s in sorted(suffix_exclude, key=len, reverse=True):
+        if token.endswith(s) and len(token) > len(s):
+            # 검색어와 접미사가 분리되어 있는지 확인
+            if searchword + s == token:
+                # 이 경우 검색어 자체를 반환하고 접미사는 별도로 처리
                 return searchword, None, s
+            elif token.endswith(searchword + s):
+                # 뒤쪽에 접미사가 붙은 경우 (예: "검색어의")
+                prefix = token[:-len(searchword + s)]
+                # 접두어가 있는 경우 전체 토큰 반환
+                if prefix:
+                    return token, None, None
+                # 접두어가 없는 경우 검색어만 반환
+                else:
+                    return searchword, None, s
+            suffix = s
+            token = token[:-len(s)]
+            break
     
-    # 2. 검색어가 토큰 내에 포함된 경우
+    # 2. 조사 확인
+    josa = None
+    chunk = token
+    
+    # 토큰이 "검색어 + 조사"로 정확히 구성된 경우
+    for j in sorted(josa_list, key=len, reverse=True):
+        if token == searchword + j:
+            return searchword, j, suffix
+    
+    # 3. 토큰 내의 위치 찾기
     start_pos = token.find(searchword)
     if start_pos != -1:
         end_pos = start_pos + len(searchword)
         
-        # 검색어 뒤에 접미사가 있는지 확인
-        if end_pos < len(token):
-            suffix_part = token[end_pos:]
-            for s in sorted(suffix_exclude, key=len, reverse=True):
-                if suffix_part == s:
-                    # 검색어 + 접미사가 정확히 토큰과 일치하는 경우
-                    if start_pos == 0:
-                        return searchword, None, s
-    
-    # 3. 조사 확인
-    for j in sorted(josa_list, key=len, reverse=True):
-        # 검색어 + 조사가 정확히 토큰과 일치하는 경우
-        if token == searchword + j:
-            return searchword, j, suffix
-        
-        # 토큰 내에 검색어가 있고, 그 뒤에 바로 조사가 따라오는 경우
-        start_pos = token.find(searchword)
-        if start_pos != -1:
-            end_pos = start_pos + len(searchword)
-            if end_pos < len(token) and token[end_pos:] == j:
-                # 검색어 + 조사가 정확히 토큰과 일치하는 경우
-                if start_pos == 0:
+        # 검색어가 토큰의 끝에 있는 경우
+        if end_pos == len(token):
+            if start_pos == 0:  # 토큰이 정확히 검색어인 경우
+                return searchword, None, suffix
+            else:  # 검색어 앞에 다른 내용이 있는 경우
+                return token, None, suffix
+                
+        # 검색어 뒤에 조사가 있는지 확인
+        for j in sorted(josa_list, key=len, reverse=True):
+            if token[end_pos:].startswith(j):
+                # 검색어 + 조사 앞에 다른 내용이 있는 경우
+                if start_pos > 0:
+                    return token, None, suffix
+                # 검색어 + 조사 뒤에 다른 내용이 있는 경우
+                elif end_pos + len(j) < len(token):
+                    return token, None, suffix
+                # 정확히 "검색어 + 조사"인 경우
+                else:
                     return searchword, j, suffix
     
     # 4. 토큰이 검색어를 포함하지만 조건에 맞지 않는 경우 토큰 전체 반환
